@@ -26,13 +26,28 @@ class TransactionListScreen extends StatelessWidget {
                     ),
                     title: Text(tx.title),
                     subtitle: Text(DateFormat.yMMMd().format(tx.date)),
-                    trailing: Text(
-                      '${tx.amount.toStringAsFixed(2)} บาท',
-                      style: TextStyle(
-                        color: tx.type == TransactionType.income
-                            ? Colors.green
-                            : Colors.red,
-                      ),
+                    // ...
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          '${tx.amount.toStringAsFixed(2)} บาท',
+                          style: TextStyle(
+                            color: tx.type == TransactionType.income
+                                ? Colors.green
+                                : Colors.red,
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.delete, color: Colors.grey),
+                          onPressed: () {
+                            // เรียกเมธอด delete
+                            context
+                                .read<TransactionProvider>()
+                                .deleteTransaction(tx.id!);
+                          },
+                        ),
+                      ],
                     ),
                   );
                 },

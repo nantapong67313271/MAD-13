@@ -81,5 +81,12 @@ class TransactionProvider with ChangeNotifier {
     );
     await fetchAndSetTransactions();
   }
+
+  Future<void> deleteTransaction(int id) async {
+    await _initDatabase();
+    if (_database == null) return;
+    await _database!.delete(_tableName, where: 'id = ?', whereArgs: [id]);
+    await fetchAndSetTransactions();
+  }
   
 }
