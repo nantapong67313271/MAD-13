@@ -68,4 +68,18 @@ class TransactionProvider with ChangeNotifier {
     print('Fetched ${_transactions.length} transactions.');
     notifyListeners(); // แจ้ง UI ให้วาดใหม่
   }
+
+  Future<void> updateTransaction(int id, MyTransaction newTransaction) async {
+    await _initDatabase();
+    if (_database == null) return;
+    await _database!.update(
+      _tableName,
+      newTransaction
+          .toMap(), // toMap() ไม่ส่ง id ที่เป็น null จึงไม่ไปเปลี่ยนคีย์หลัก
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+    await fetchAndSetTransactions();
+  }
+  
 }
