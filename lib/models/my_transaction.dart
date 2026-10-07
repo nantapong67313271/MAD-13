@@ -6,6 +6,7 @@ class MyTransaction {
   final double amount;
   final DateTime date;
   final TransactionType type;
+  final String? note;
 
   MyTransaction({
     this.id,
@@ -13,6 +14,7 @@ class MyTransaction {
     required this.amount,
     required this.date,
     required this.type,
+    this.note,
   });
 
   Map<String, dynamic> toMap() {

@@ -22,13 +22,20 @@ class TransactionProvider with ChangeNotifier {
       final path = join(dbPath, _dbName);
       _database = await openDatabase(
         path,
-        version: 1,
+        version: 2,
         onCreate: (db, version) {
-          print('Creating table $_tableName...');
           return db.execute(
-            'CREATE TABLE $_tableName(id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT, amount REAL, date TEXT, type TEXT)',
+            'CREATE TABLE transactions(id TEXT PRIMARY KEY, title TEXT, amount REAL, date TEXT, type TEXT, note TEXT)',
           );
         },
+        // ===== เพิ่มส่วน onUpgrade ตรงนี้ครับ =====
+        onUpgrade: (db, oldVersion, newVersion) async {
+          if (oldVersion < 2) {
+            await db.execute('ALTER TABLE transactions ADD COLUMN note TEXT');
+            print('Database upgraded: Added note column');
+          }
+        },
+        // ==========================================
       );
       print('Database initialized at $path');
     } catch (e) {
@@ -54,7 +61,6 @@ class TransactionProvider with ChangeNotifier {
 
     final id = await _database!.insert(_tableName, newTransaction.toMap());
     print('Inserted transaction with id: $id');
-    // await fetchAndSetTransactions(); // เปิดบรรทัดนี้ในกระบวนการที่ 4
   }
 
   Future<void> fetchAndSetTransactions() async {
@@ -74,8 +80,7 @@ class TransactionProvider with ChangeNotifier {
     if (_database == null) return;
     await _database!.update(
       _tableName,
-      newTransaction
-          .toMap(), // toMap() ไม่ส่ง id ที่เป็น null จึงไม่ไปเปลี่ยนคีย์หลัก
+      newTransaction.toMap(),
       where: 'id = ?',
       whereArgs: [id],
     );
@@ -88,5 +93,24 @@ class TransactionProvider with ChangeNotifier {
     await _database!.delete(_tableName, where: 'id = ?', whereArgs: [id]);
     await fetchAndSetTransactions();
   }
-  
+
+  Future<double> getBalance() async {
+    await _initDatabase();
+    if (_database == null) return 0.0;
+    final db = _database!;
+    final List<Map<String, dynamic>> result = await db.rawQuery('''
+    SELECT SUM(
+      CASE 
+        WHEN type = 'TransactionType.income' THEN amount 
+        ELSE -amount 
+      END
+    ) as totalBalance
+    FROM transactions
+  ''');
+
+    if (result.isNotEmpty && result.first['totalBalance'] != null) {
+      return (result.first['totalBalance'] as num).toDouble();
+    }
+    return 0.0;
+  }
 }
